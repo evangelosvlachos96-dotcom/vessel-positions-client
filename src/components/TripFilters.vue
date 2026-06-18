@@ -132,20 +132,3 @@ const clearFilters = (): void => {
   emit('update:modelValue', emptyTripFilters());
 };
 </script>
-
-<style scoped>
-.filter-select {
-  appearance: none;
-  color-scheme: dark;
-  padding-right: 1.75rem;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2394a3b8'%3E%3Cpath fill-rule='evenodd' d='M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.5rem center;
-  background-size: 0.875rem 0.875rem;
-}
-
-.filter-select option {
-  background-color: #0f172a;
-  color: #e2e8f0;
-}
-</style>
