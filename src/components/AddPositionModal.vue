@@ -85,11 +85,9 @@
                   <span class="text-xs font-medium uppercase tracking-wide text-slate-500">
                     Received time (UTC)
                   </span>
-                  <input
+                  <DateTimeInput
                     v-model="row.receivedTimeUtc"
-                    type="datetime-local"
-                    step="1"
-                    :class="[fieldClass, 'datetime-field']"
+                    placeholder="Select UTC time"
                     :disabled="submitting"
                   />
                 </label>
@@ -163,6 +161,7 @@ import {
   createPositions,
   parseCreatePositionsFailure,
 } from '../api/positions';
+import DateTimeInput from './DateTimeInput.vue';
 import type { ICreatePositionInput } from '../types/interfaces';
 
 interface IPositionRow {

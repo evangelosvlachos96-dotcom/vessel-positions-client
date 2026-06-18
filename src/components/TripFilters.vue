@@ -36,21 +36,19 @@
 
       <label class="block space-y-1.5">
         <span class="text-xs font-medium uppercase tracking-wide text-slate-500">From date</span>
-        <input
-          type="date"
-          :value="modelValue.from"
-          :class="dateClass"
-          @input="emit('update:modelValue', { ...modelValue, from: ($event.target as HTMLInputElement).value })"
+        <DateInput
+          :model-value="modelValue.from"
+          placeholder="Any start date"
+          @update:model-value="emit('update:modelValue', { ...modelValue, from: $event })"
         />
       </label>
 
       <label class="block space-y-1.5">
         <span class="text-xs font-medium uppercase tracking-wide text-slate-500">To date</span>
-        <input
-          type="date"
-          :value="modelValue.to"
-          :class="dateClass"
-          @input="emit('update:modelValue', { ...modelValue, to: ($event.target as HTMLInputElement).value })"
+        <DateInput
+          :model-value="modelValue.to"
+          placeholder="Any end date"
+          @update:model-value="emit('update:modelValue', { ...modelValue, to: $event })"
         />
       </label>
 
@@ -86,6 +84,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import DateInput from './DateInput.vue';
 import type { ITripFilters } from '../types/interfaces';
 import { emptyTripFilters, PAGE_LIMIT_OPTIONS } from '../utils/trip-filters';
 import { OCEAN_REGION_NAMES } from '../utils/location';
@@ -94,8 +93,6 @@ const fieldClass =
   'w-full rounded-lg bg-white/5 px-3 py-2.5 text-sm text-slate-100 shadow-inner shadow-black/10 outline-none ring-1 ring-inset ring-white/10 transition focus:bg-white/[0.07] focus:ring-2 focus:ring-cyan-500/35';
 
 const selectClass = `${fieldClass} filter-select`;
-
-const dateClass = `${fieldClass} [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-60 hover:[&::-webkit-calendar-picker-indicator]:opacity-100`;
 
 const props = defineProps<{
   modelValue: ITripFilters;
