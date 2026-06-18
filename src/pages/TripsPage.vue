@@ -3,7 +3,10 @@
     <section>
       <h1 class="text-3xl font-bold text-white">Vessel Trips</h1>
       <p class="mt-2 text-sm text-slate-400">
-        Loaded from <code class="text-cyan-200">GET /positions/trips</code>
+        Summaries from
+        <code class="text-cyan-200">GET /positions/trips</code>
+        · positions from
+        <code class="text-cyan-200">GET /positions/trips/:vesselId/positions</code>
       </p>
     </section>
 
@@ -24,30 +27,30 @@
       <p class="text-sm text-slate-400">
         {{ trips.length }} vessels · {{ totalPositions.toLocaleString() }} positions
       </p>
-      <TripCard v-for="trip in trips" :key="trip.vesselId" :trip="trip" />
+      <TripCard v-for="trip in trips" :key="trip.vesselId" :summary="trip" />
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { fetchTrips } from '../api/trips';
+import { fetchTripSummaries } from '../api/trips';
 import ErrorState from '../components/ErrorState.vue';
 import LoadingState from '../components/LoadingState.vue';
 import TripCard from '../components/TripCard.vue';
-import type { IVesselTrip } from '../types/trip';
+import type { IVesselTripSummary } from '../types/trip';
 
-const trips = ref<IVesselTrip[]>([]);
+const trips = ref<IVesselTripSummary[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
 const totalPositions = computed(() =>
-  trips.value.reduce((sum, trip) => sum + trip.positions.length, 0),
+  trips.value.reduce((sum, trip) => sum + trip.total, 0),
 );
 
 onMounted(async () => {
   try {
-    trips.value = await fetchTrips();
+    trips.value = await fetchTripSummaries();
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load trips';
   } finally {
