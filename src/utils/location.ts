@@ -1,4 +1,22 @@
 /** Frontend-only: turn coordinates into a readable location label. */
+export const OCEAN_REGION_NAMES = [
+  'Arctic Ocean',
+  'Southern Ocean',
+  'North Atlantic',
+  'South Atlantic',
+  'North Pacific',
+  'South Pacific',
+  'Indian Ocean',
+  'Mediterranean Sea',
+  'South China Sea',
+  'Gulf of Mexico',
+  'Caribbean Sea',
+  'Northern waters',
+  'Southern waters',
+] as const;
+
+export type OceanRegionName = (typeof OCEAN_REGION_NAMES)[number];
+
 export const formatCoordinates = (
   latitude: number,
   longitude: number,

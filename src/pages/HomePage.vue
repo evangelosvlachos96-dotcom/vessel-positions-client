@@ -29,10 +29,6 @@
           View vessel trips
         </RouterLink>
         <div class="rounded-2xl bg-black/20 px-5 py-4 ring-1 ring-white/10">
-          <p class="text-xs uppercase tracking-wide text-slate-400">Ingestion API</p>
-          <p class="mt-1 font-mono text-sm text-cyan-200">POST /positions</p>
-        </div>
-        <div class="rounded-2xl bg-black/20 px-5 py-4 ring-1 ring-white/10">
           <p class="text-xs uppercase tracking-wide text-slate-400">Status</p>
           <p class="mt-1 text-sm font-medium text-emerald-300">Ready</p>
         </div>
