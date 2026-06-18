@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosHeaders } from 'axios';
+import { AxiosError, AxiosHeaders } from 'axios';
 import { describe, expect, it } from 'vitest';
 import { parseCreatePositionsFailure } from '../../src/api/positions';
 

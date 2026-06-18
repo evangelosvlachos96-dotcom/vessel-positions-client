@@ -48,3 +48,21 @@ select:disabled {
 .datetime-field:hover::-webkit-calendar-picker-indicator {
   opacity: 1;
 }
+
+.date-input-empty {
+  color: transparent;
+}
+
+.date-input-empty::-webkit-datetime-edit,
+.date-input-empty::-webkit-datetime-edit-fields-wrapper {
+  color: transparent;
+}
+
+.date-input-empty:focus {
+  color: rgb(241 245 249);
+}
+
+.date-input-empty:focus::-webkit-datetime-edit,
+.date-input-empty:focus::-webkit-datetime-edit-fields-wrapper {
+  color: rgb(241 245 249);
+}
