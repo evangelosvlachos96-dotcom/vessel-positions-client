@@ -45,7 +45,9 @@
           :key="trip.vesselId"
           :summary="trip"
           :filters="filters"
+          :offset="offsetsByVessel[trip.vesselId] ?? 0"
           :refresh-key="refreshKey"
+          @update:offset="setVesselOffset(trip.vesselId, $event)"
         />
       </section>
     </template>
@@ -60,7 +62,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { fetchTripSummaries } from '../api/trips';
 import AddPositionModal from '../components/AddPositionModal.vue';
 import ErrorState from '../components/ErrorState.vue';
@@ -68,10 +71,20 @@ import LoadingState from '../components/LoadingState.vue';
 import TripCard from '../components/TripCard.vue';
 import TripFilters from '../components/TripFilters.vue';
 import type { ITripFilters, IVesselTripSummary } from '../types/interfaces';
-import { emptyTripFilters } from '../utils/trip-filters';
+import {
+  buildTripsQuery,
+  parseOffsetsFromQuery,
+  parseTripFiltersFromQuery,
+} from '../utils/trip-filters-url';
+
+const route = useRoute();
+const router = useRouter();
 
 const trips = ref<IVesselTripSummary[]>([]);
-const filters = ref<ITripFilters>(emptyTripFilters());
+const filters = ref<ITripFilters>(parseTripFiltersFromQuery(route.query));
+const offsetsByVessel = ref<Record<number, number>>(
+  parseOffsetsFromQuery(route.query),
+);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const showAddModal = ref(false);
@@ -95,6 +108,42 @@ const reloadTrips = async (): Promise<void> => {
   trips.value = await fetchTripSummaries();
   refreshKey.value += 1;
 };
+
+const setVesselOffset = (vesselId: number, offset: number): void => {
+  if (offset <= 0) {
+    const { [vesselId]: _, ...rest } = offsetsByVessel.value;
+    offsetsByVessel.value = rest;
+    return;
+  }
+
+  offsetsByVessel.value = {
+    ...offsetsByVessel.value,
+    [vesselId]: offset,
+  };
+};
+
+watch(
+  filters,
+  () => {
+    offsetsByVessel.value = {};
+  },
+  { deep: true },
+);
+
+watch(
+  [filters, offsetsByVessel],
+  () => {
+    const nextQuery = buildTripsQuery(filters.value, offsetsByVessel.value);
+    const currentQuery = route.query as Record<string, string>;
+
+    if (JSON.stringify(nextQuery) === JSON.stringify(currentQuery)) {
+      return;
+    }
+
+    void router.replace({ query: nextQuery });
+  },
+  { deep: true },
+);
 
 onMounted(async () => {
   try {

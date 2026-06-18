@@ -132,14 +132,23 @@ import { getLocationFromCoordinates } from '../utils/location';
 const props = defineProps<{
   summary: IVesselTripSummary;
   filters: ITripFilters;
+  offset: number;
   refreshKey?: number;
+}>();
+
+const emit = defineEmits<{
+  'update:offset': [value: number];
 }>();
 
 const positions = ref<IPosition[]>([]);
 const filteredTotal = ref(0);
-const offset = ref(0);
 const positionsLoading = ref(true);
 const positionsError = ref<string | null>(null);
+
+const offset = computed({
+  get: () => props.offset,
+  set: (value: number) => emit('update:offset', value),
+});
 
 const accentClasses = [
   'bg-cyan-500/20 ring-1 ring-cyan-400/30',
@@ -238,6 +247,15 @@ watch(
     void loadPositions();
   },
   { deep: true },
+);
+
+watch(
+  () => props.offset,
+  (next, previous) => {
+    if (next !== previous) {
+      void loadPositions();
+    }
+  },
 );
 
 watch(
