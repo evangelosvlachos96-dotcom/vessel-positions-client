@@ -6,7 +6,16 @@ export interface IPosition {
   longitude: number;
 }
 
-export interface IVesselTrip {
+export interface IVesselTripSummary {
   vesselId: number;
-  positions: IPosition[];
+  total: number;
+  firstPosition: IPosition;
+  lastPosition: IPosition;
+}
+
+export interface IPositionsPage {
+  items: IPosition[];
+  total: number;
+  limit: number;
+  offset: number;
 }
