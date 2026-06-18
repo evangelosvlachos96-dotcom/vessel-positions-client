@@ -16,6 +16,9 @@
           <h2 class="text-lg font-semibold text-white">Vessel {{ summary.vesselId }}</h2>
           <p class="text-sm text-slate-400">
             {{ summary.total.toLocaleString() }} position reports
+            <span v-if="hasActiveFilters" class="text-cyan-300">
+              · {{ filteredTotal.toLocaleString() }} matching filters
+            </span>
           </p>
         </div>
       </div>
@@ -45,52 +48,57 @@
       <p class="text-sm text-rose-300">{{ positionsError }}</p>
     </div>
 
-    <div class="max-h-80 overflow-auto">
-      <table class="min-w-full text-left text-sm">
-        <thead class="sticky top-0 bg-slate-900/95 text-xs uppercase tracking-wider text-slate-400">
-          <tr>
-            <th class="px-5 py-3 font-medium">Time (UTC)</th>
-            <th class="px-5 py-3 font-medium">Location</th>
-            <th class="px-5 py-3 font-medium">Latitude</th>
-            <th class="px-5 py-3 font-medium">Longitude</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-white/5">
-          <tr v-if="positionsLoading">
-            <td colspan="4" class="px-5 py-6 text-center text-slate-400">Loading positions…</td>
-          </tr>
-          <tr
-            v-for="position in positions"
-            v-else
-            :key="position.id"
-            class="transition hover:bg-white/5"
-          >
-            <td class="px-5 py-3 font-mono text-slate-300">
-              {{ position.receivedTimeUtc }}
-            </td>
-            <td class="px-5 py-3 text-slate-300">
-              {{ locationFor(position.latitude, position.longitude) }}
-            </td>
-            <td class="px-5 py-3 font-mono text-cyan-200">
-              {{ position.latitude.toFixed(5) }}
-            </td>
-            <td class="px-5 py-3 font-mono text-cyan-200">
-              {{ position.longitude.toFixed(5) }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="relative h-80 min-h-80 overflow-hidden">
+      <div class="h-full overflow-auto">
+        <table class="min-w-full table-fixed text-left text-sm">
+          <thead class="sticky top-0 z-[1] bg-slate-900/95 text-xs uppercase tracking-wider text-slate-400">
+            <tr>
+              <th class="w-[34%] px-5 py-3 font-medium">Time (UTC)</th>
+              <th class="w-[36%] px-5 py-3 font-medium">Location</th>
+              <th class="w-[15%] px-5 py-3 font-medium">Latitude</th>
+              <th class="w-[15%] px-5 py-3 font-medium">Longitude</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            <tr
+              v-for="position in positions"
+              :key="position.id"
+              class="transition hover:bg-white/5"
+              :class="{ 'opacity-50': positionsLoading }"
+            >
+              <td class="truncate px-5 py-3 font-mono text-slate-300">
+                {{ position.receivedTimeUtc }}
+              </td>
+              <td class="truncate px-5 py-3 text-slate-300">
+                {{ locationFor(position.latitude, position.longitude) }}
+              </td>
+              <td class="px-5 py-3 font-mono text-cyan-200">
+                {{ position.latitude.toFixed(5) }}
+              </td>
+              <td class="px-5 py-3 font-mono text-cyan-200">
+                {{ position.longitude.toFixed(5) }}
+              </td>
+            </tr>
+            <tr v-if="!positionsLoading && positions.length === 0">
+              <td colspan="4" class="px-5 py-6 text-center text-slate-400">
+                No positions match the current filters.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <TableLoader v-if="positionsLoading" />
     </div>
 
     <div
       class="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-white/5 px-5 py-3"
     >
       <p class="text-sm text-slate-400">
-        <template v-if="summary.total > 0">
+        <template v-if="filteredTotal > 0">
           Showing {{ rangeStart.toLocaleString() }}–{{ rangeEnd.toLocaleString() }} of
-          {{ summary.total.toLocaleString() }}
+          {{ filteredTotal.toLocaleString() }}
         </template>
-        <template v-else>No positions</template>
+        <template v-else>No matching positions</template>
       </p>
       <div class="flex items-center gap-2">
         <button
@@ -115,16 +123,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { fetchTripPositions, PAGE_SIZE } from '../api/trips';
-import type { IPosition, IVesselTripSummary } from '../types/trip';
+import { computed, onMounted, ref, watch } from 'vue';
+import { fetchTripPositions } from '../api/trips';
+import TableLoader from './TableLoader.vue';
+import type { IPosition, ITripFilters, IVesselTripSummary } from '../types/interfaces';
 import { getLocationFromCoordinates } from '../utils/location';
 
 const props = defineProps<{
   summary: IVesselTripSummary;
+  filters: ITripFilters;
 }>();
 
 const positions = ref<IPosition[]>([]);
+const filteredTotal = ref(0);
 const offset = ref(0);
 const positionsLoading = ref(true);
 const positionsError = ref<string | null>(null);
@@ -137,6 +148,13 @@ const accentClasses = [
 
 const accentClass = computed(
   () => accentClasses[props.summary.vesselId % accentClasses.length],
+);
+
+const hasActiveFilters = computed(
+  () =>
+    props.filters.from !== '' ||
+    props.filters.to !== '' ||
+    props.filters.region !== '',
 );
 
 const startLocation = computed(() =>
@@ -153,15 +171,21 @@ const endLocation = computed(() =>
   ),
 );
 
-const rangeStart = computed(() => (props.summary.total === 0 ? 0 : offset.value + 1));
+const rangeStart = computed(() =>
+  filteredTotal.value === 0 ? 0 : offset.value + 1,
+);
 
 const rangeEnd = computed(() =>
-  Math.min(offset.value + positions.value.length, props.summary.total),
+  Math.min(offset.value + positions.value.length, filteredTotal.value),
 );
 
 const canGoPrev = computed(() => offset.value > 0);
 
-const canGoNext = computed(() => offset.value + PAGE_SIZE < props.summary.total);
+const pageLimit = computed(() => props.filters.limit);
+
+const canGoNext = computed(
+  () => offset.value + pageLimit.value < filteredTotal.value,
+);
 
 const locationFor = (latitude: number, longitude: number): string =>
   getLocationFromCoordinates(latitude, longitude);
@@ -179,10 +203,16 @@ const loadPositions = async (): Promise<void> => {
   positionsError.value = null;
 
   try {
-    const page = await fetchTripPositions(props.summary.vesselId, offset.value);
+    const page = await fetchTripPositions(
+      props.summary.vesselId,
+      offset.value,
+      props.filters,
+    );
     positions.value = page.items;
+    filteredTotal.value = page.total;
   } catch (err) {
     positions.value = [];
+    filteredTotal.value = 0;
     positionsError.value =
       err instanceof Error ? err.message : 'Failed to load positions';
   } finally {
@@ -191,14 +221,23 @@ const loadPositions = async (): Promise<void> => {
 };
 
 const goPrev = (): void => {
-  offset.value = Math.max(0, offset.value - PAGE_SIZE);
+  offset.value = Math.max(0, offset.value - pageLimit.value);
   void loadPositions();
 };
 
 const goNext = (): void => {
-  offset.value += PAGE_SIZE;
+  offset.value += pageLimit.value;
   void loadPositions();
 };
+
+watch(
+  () => props.filters,
+  () => {
+    offset.value = 0;
+    void loadPositions();
+  },
+  { deep: true },
+);
 
 onMounted(() => {
   void loadPositions();
