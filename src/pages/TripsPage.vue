@@ -1,7 +1,15 @@
 <template>
   <div class="space-y-6">
-    <section>
+    <section class="flex flex-wrap items-center justify-between gap-4">
       <h1 class="text-3xl font-bold text-white">Vessel Trips</h1>
+      <button
+        v-if="!loading && !error && trips.length > 0"
+        type="button"
+        class="rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
+        @click="showAddModal = true"
+      >
+        Add positions
+      </button>
     </section>
 
     <LoadingState v-if="loading" />
@@ -37,15 +45,24 @@
           :key="trip.vesselId"
           :summary="trip"
           :filters="filters"
+          :refresh-key="refreshKey"
         />
       </section>
     </template>
+
+    <AddPositionModal
+      :open="showAddModal"
+      :vessel-ids="vesselIds"
+      @close="showAddModal = false"
+      @saved="reloadTrips"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { fetchTripSummaries } from '../api/trips';
+import AddPositionModal from '../components/AddPositionModal.vue';
 import ErrorState from '../components/ErrorState.vue';
 import LoadingState from '../components/LoadingState.vue';
 import TripCard from '../components/TripCard.vue';
@@ -57,6 +74,8 @@ const trips = ref<IVesselTripSummary[]>([]);
 const filters = ref<ITripFilters>(emptyTripFilters());
 const loading = ref(true);
 const error = ref<string | null>(null);
+const showAddModal = ref(false);
+const refreshKey = ref(0);
 
 const vesselIds = computed(() => trips.value.map((trip) => trip.vesselId));
 
@@ -72,9 +91,14 @@ const totalPositions = computed(() =>
   visibleTrips.value.reduce((sum, trip) => sum + trip.total, 0),
 );
 
+const reloadTrips = async (): Promise<void> => {
+  trips.value = await fetchTripSummaries();
+  refreshKey.value += 1;
+};
+
 onMounted(async () => {
   try {
-    trips.value = await fetchTripSummaries();
+    await reloadTrips();
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load trips';
   } finally {

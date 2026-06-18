@@ -132,6 +132,7 @@ import { getLocationFromCoordinates } from '../utils/location';
 const props = defineProps<{
   summary: IVesselTripSummary;
   filters: ITripFilters;
+  refreshKey?: number;
 }>();
 
 const positions = ref<IPosition[]>([]);
@@ -237,6 +238,14 @@ watch(
     void loadPositions();
   },
   { deep: true },
+);
+
+watch(
+  () => props.refreshKey,
+  () => {
+    offset.value = 0;
+    void loadPositions();
+  },
 );
 
 onMounted(() => {
