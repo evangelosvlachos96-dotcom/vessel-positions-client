@@ -1,6 +1,6 @@
 # Vessel Positions Client
 
-Vue 3 SPA for browsing vessel trips and submitting new position reports. Talks to the [Vessel Positions API](https://github.com/alexandrosgialantzis/vessel-position-api).
+Vue 3 SPA for browsing vessel trips and submitting new position reports. Talks to the [Vessel Positions API](https://github.com/alexandrosgialantzis/Vessels-pos-api).
 
 **Stack:** Vue 3 · TypeScript · Vite · Tailwind CSS v4 · Vue Router
 
